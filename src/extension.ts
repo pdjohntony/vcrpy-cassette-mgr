@@ -15,24 +15,24 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(command1);
 
     vcrDecorationType = vscode.window.createTextEditorDecorationType({
-        gutterIconPath: vscode.Uri.file(vscode.Uri.file('src/cassette-fill.svg').fsPath), // broke
-        gutterIconSize: 'auto',
-        after: {
-            contentText: 'Possible cassette',
-            margin: '0 0 0 2em',
-            color: '#ff8040',
-        },
+        gutterIconPath: vscode.Uri.file(path.join(context.extensionPath, 'src', 'cassette-fill.svg')),
+        gutterIconSize: 'contain',
+        // after: {
+        //     contentText: 'Possible cassette',
+        //     margin: '0 0 0 2em',
+        //     color: '#ff8040',
+        // },
     });
 
-    // updateDecorations(vscode.window.activeTextEditor, context);
+    updateDecorations(vscode.window.activeTextEditor, context);
 
-    // context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(editor => {
-    // 	updateDecorations(editor, context);
-    // }));
+    context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(editor => {
+    	updateDecorations(editor, context);
+    }));
 
-    // context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(event => {
-    // 	updateDecorations(vscode.window.activeTextEditor, context);
-    // }));
+    context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(event => {
+    	updateDecorations(vscode.window.activeTextEditor, context);
+    }));
 
     context.subscriptions.push(vscode.languages.registerCodeLensProvider({ language: 'python' }, new VcrCodeLensProvider()));
     console.log('Activated vcrpy-mgr code lens provider');
