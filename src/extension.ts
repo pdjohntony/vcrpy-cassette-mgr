@@ -71,9 +71,12 @@ function updateDecorations(editor?: vscode.TextEditor, context?: vscode.Extensio
 class VcrCodeLensProvider implements vscode.CodeLensProvider {
 	provideCodeLenses(document: vscode.TextDocument, token: vscode.CancellationToken): vscode.CodeLens[] {
 		const vcrCodeLenses: vscode.CodeLens[] = [];
-		const regex = /@pytest\.mark\.vcr/g;
+		const text = document.getText();
+		const regex = /(?<!# *)(@pytest\.mark\.vcr)(?:.|\n|\r)*?def (\w+)\(/g;
 		let match;
-		while (match = regex.exec(document.getText())) {
+		while ((match = regex.exec(text)) !== null) {
+			console.log('Found @pytest.mark.vcr decorator');
+			console.log('Def name: ' + match[2]);
 			const startPos = document.positionAt(match.index);
 			const endPos = document.positionAt(match.index + match[0].length);
 			const range = new vscode.Range(startPos, endPos);
