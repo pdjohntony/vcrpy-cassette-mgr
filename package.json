@@ -24,6 +24,14 @@
         {
             "command": "vcrpy-mgr.helloWorld",
             "title": "Vcrpy Mgr: Hello World"
+        },
+        {
+            "command": "vcrpy-mgr.openCassette",
+            "title": "Vcrpy Mgr: Open Cassette"
+        },
+        {
+            "command": "vcrpy-mgr.deleteCassette",
+            "title": "Vcrpy Mgr: Delete Cassette"
         }
     ]
   },
