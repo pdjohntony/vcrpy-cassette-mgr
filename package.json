@@ -1,39 +1,62 @@
 {
-  "name": "vcrpy-cassette-mgr",
-  "displayName": "VCR.py Cassete Manager",
-  "description": "Easily open and delete vcrpy cassettes right within your tests",
-  "version": "0.0.1",
-  "engines": {
-    "vscode": "^1.85.0"
-  },
-  "categories": [
-    "Other"
-  ],
-  "activationEvents": ["onStartupFinished"],
-  "main": "./out/extension.js",
-  "contributes": {
-    "menus": {
-        "editor/context": []
+    "name": "vcrpy-cassette-mgr",
+    "displayName": "VCR.py Cassette Manager",
+    "description": "Easily open and delete vcrpy cassettes right within your tests",
+    "version": "1.0.0",
+    "engines": {
+        "vscode": "^1.85.0"
     },
-    "commands": []
-  },
-  "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
-    "lint": "eslint src --ext ts",
-    "test": "vscode-test"
-  },
-  "devDependencies": {
-    "@types/vscode": "^1.85.0",
-    "@types/mocha": "^10.0.6",
-    "@types/node": "18.x",
-    "@typescript-eslint/eslint-plugin": "^6.13.1",
-    "@typescript-eslint/parser": "^6.13.1",
-    "eslint": "^8.54.0",
-    "typescript": "^5.3.2",
-    "@vscode/test-cli": "^0.0.4",
-    "@vscode/test-electron": "^2.3.8"
-  }
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": ["onStartupFinished"],
+    "main": "./out/extension.js",
+    "contributes": {
+        "configuration": {
+            "title": "VCR.py Cassette Manager",
+            "properties": {
+                "vcrpy-cassette-mgr.testFileNameStartsWith": {
+                    "type": "string",
+                    "default": "test_",
+                    "minLength": 1,
+                    "description": "The prefix of your test files. This is used to determine which files are test files and which are not."
+                },
+                "vcrpy-cassette-mgr.cassetteDirectoryName": {
+                    "type": "string",
+                    "default": "cassettes",
+                    "minLength": 1,
+                    "description": "The name of the directory where your cassettes are stored. The directory will be automatically located in any subdirectories of your workspace."
+                },
+                "vcrpy-cassette-mgr.vcrDecoratorMatchText": {
+                    "type": "string",
+                    "default": "@pytest.mark.vcr",
+                    "minLength": 1,
+                    "description": "The text that should be matched to determine if a line is a vcrpy decorator. The default is for pytest, but can be changed to match any decorator such as `@vcr.use_cassette`."
+                }
+            }
+        },
+        "menus": {
+            "editor/context": []
+        },
+        "commands": []
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "pretest": "npm run compile && npm run lint",
+        "lint": "eslint src --ext ts",
+        "test": "vscode-test"
+    },
+    "devDependencies": {
+        "@types/vscode": "^1.85.0",
+        "@types/mocha": "^10.0.6",
+        "@types/node": "18.x",
+        "@typescript-eslint/eslint-plugin": "^6.13.1",
+        "@typescript-eslint/parser": "^6.13.1",
+        "eslint": "^8.54.0",
+        "typescript": "^5.3.2",
+        "@vscode/test-cli": "^0.0.4",
+        "@vscode/test-electron": "^2.3.8"
+    }
 }
