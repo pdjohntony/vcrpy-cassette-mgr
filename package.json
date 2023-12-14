@@ -13,27 +13,9 @@
   "main": "./out/extension.js",
   "contributes": {
     "menus": {
-        "editor/context": [
-            {
-                "command": "vcrpy-mgr.helloWorld",
-                "group": "navigation"
-            }
-        ]
+        "editor/context": []
     },
-    "commands": [
-        {
-            "command": "vcrpy-mgr.helloWorld",
-            "title": "Vcrpy Mgr: Hello World"
-        },
-        {
-            "command": "vcrpy-mgr.openCassette",
-            "title": "Vcrpy Mgr: Open Cassette"
-        },
-        {
-            "command": "vcrpy-mgr.deleteCassette",
-            "title": "Vcrpy Mgr: Delete Cassette"
-        }
-    ]
+    "commands": []
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
