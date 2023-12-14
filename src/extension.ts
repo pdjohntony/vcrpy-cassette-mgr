@@ -1,41 +1,11 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import * as path from 'path';
 
-let vcrDecorationType: vscode.TextEditorDecorationType;
-
 export function activate(context: vscode.ExtensionContext) {
-    console.log('Congratulations, your extension "vcrpy-mgr" is now active!');
-
-    let command1 = vscode.commands.registerCommand('vcrpy-mgr.helloWorld', () => {
-        vscode.window.showInformationMessage('Hello World from vcrpy-mgr and Phill!');
-    });
-
-    context.subscriptions.push(command1);
-
-    vcrDecorationType = vscode.window.createTextEditorDecorationType({
-        gutterIconPath: vscode.Uri.file(path.join(context.extensionPath, 'src', 'cassette-fill.svg')),
-        gutterIconSize: 'contain',
-        // after: {
-        //     contentText: 'Possible cassette',
-        //     margin: '0 0 0 2em',
-        //     color: '#ff8040',
-        // },
-    });
-
-    updateDecorations(vscode.window.activeTextEditor, context);
-
-    context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(editor => {
-    	updateDecorations(editor, context);
-    }));
-
-    context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(event => {
-    	updateDecorations(vscode.window.activeTextEditor, context);
-    }));
+    console.log('vcrpy-mgr extension is now active!');
 
     context.subscriptions.push(vscode.languages.registerCodeLensProvider({ language: 'python' }, new VcrCodeLensProvider()));
-    console.log('Activated vcrpy-mgr code lens provider');
+    console.log('Activated vcrpy-mgr code lens provider!');
 
     context.subscriptions.push(vscode.commands.registerCommand('vcrpy-mgr.openCassette', (uri: vscode.Uri) => {
         vscode.window.showTextDocument(uri);
@@ -48,36 +18,6 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.window.showInformationMessage('Deleted ' + uri.path);
         }
     }));
-}
-
-function updateDecorations(editor?: vscode.TextEditor, context?: vscode.ExtensionContext) {
-    if (!editor || !context) {
-        return;
-    }
-    if (editor.document.languageId !== 'python') {
-        return;
-    }
-    // ? this isn't working
-    // if (!editor.document.fileName.startsWith('test')) {
-    // 	return;
-    // }
-    console.log('Updating vcrpy decorations');
-
-    const text = editor.document.getText();
-    
-    const vcrDecorations: vscode.DecorationOptions[] = [];
-    const regex = /@pytest\.mark\.vcr/g;
-    let match;
-    while (match = regex.exec(text)) {
-        const startPos = editor.document.positionAt(match.index+1);
-        const endPos = editor.document.positionAt(match.index + match[0].length);
-        const decoration = { range: new vscode.Range(startPos, endPos) };
-        vcrDecorations.push(decoration);
-        console.log('Found pytest vcrpy decorator');
-    }
-
-    editor.setDecorations(vcrDecorationType, vcrDecorations);
-    console.log('Updated vcrpy decorations');
 }
 
 class VcrCodeLensProvider implements vscode.CodeLensProvider {
@@ -134,8 +74,7 @@ async function checkFileAndCreateCodeLens(functionName: string, cassetteFilePath
         console.log('No cassette file found for ' + functionName);
         const codeLens = new vscode.CodeLens(range, {
             title: 'No cassette found',
-            command: 'vcrpy-mgr.helloWorld',
-            arguments: [vscode.Uri.file(cassetteFilePath)]
+            command: ''
         });
         vcrCodeLenses.push(codeLens);
     }
