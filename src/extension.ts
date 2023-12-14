@@ -1,23 +1,30 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 
-let config = vscode.workspace.getConfiguration('vcrpy-cassette-mgr');
-let testFileNameStartsWith = config.get('testFileNameStartsWith') as string;
-let cassetteDirectoryName = config.get('cassetteDirectoryName') as string;
-let vcrDecoratorMatchText = config.get('vcrDecoratorMatchText') as string;
+let testFileNameStartsWith: string = 'test_';
+let cassetteDirectoryName: string = 'cassettes';
+let vcrDecoratorMatchText: string = '@pytest.mark.vcr';
+let cassetteDir: string | null = null;
 
-export function activate(context: vscode.ExtensionContext) {
+async function loadConfigOptions() {
+    const config = vscode.workspace.getConfiguration('vcrpy-cassette-mgr');
+    testFileNameStartsWith = config.get('testFileNameStartsWith') as string;
+    cassetteDirectoryName = config.get('cassetteDirectoryName') as string;
+    vcrDecoratorMatchText = config.get('vcrDecoratorMatchText') as string;
+    console.log(`Configuration loaded, values: testFileNameStartsWith='${testFileNameStartsWith}', cassetteDirectoryName='${cassetteDirectoryName}', vcrDecoratorMatchText='${vcrDecoratorMatchText}'`);
+    cassetteDir = await scanForCassetteDirectory(cassetteDirectoryName);
+}
+
+
+export async function activate(context: vscode.ExtensionContext) {
     console.log('vcrpy-cassette-mgr extension is now active!');
 
+    await loadConfigOptions();
+
     // Listen for configuration changes
-    context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
+    context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(async e => {
         if (e.affectsConfiguration('vcrpy-cassette-mgr')) {
-            // The configuration has changed, read the new values
-            let config = vscode.workspace.getConfiguration('vcrpy-cassette-mgr');
-            testFileNameStartsWith = config.get('testFileNameStartsWith') as string;
-            cassetteDirectoryName = config.get('cassetteDirectoryName') as string;
-            vcrDecoratorMatchText = config.get('vcrDecoratorMatchText') as string;
-            console.log(`Configuration changed, new values: testFileNameStartsWith='${testFileNameStartsWith}', cassetteDirectoryName='${cassetteDirectoryName}', vcrDecoratorMatchText='${vcrDecoratorMatchText}'`);
+            await loadConfigOptions();
         }
     }));
 
@@ -37,6 +44,24 @@ export function activate(context: vscode.ExtensionContext) {
     }));
 }
 
+async function scanForCassetteDirectory(dirName: string): Promise<string|null> {
+    let cassetteDir = null;
+    const workspaceFolderPath = vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders[0].uri.fsPath : '';
+    const workspaceFolderURI = vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders[0].uri : null;
+    if (workspaceFolderURI) {
+        const files = await vscode.workspace.findFiles(`**/${cassetteDirectoryName}/*`, '**/node_modules/**', 1);
+        if (files.length > 0) {
+            cassetteDir = path.dirname(files[0].fsPath);
+            console.log(`'${cassetteDirectoryName}' directory found at path '${cassetteDir}'`);
+            return cassetteDir;
+        } else {
+            console.log(`'${cassetteDirectoryName}' directory not found`);
+            return null;
+        }
+    }
+    return null;
+}
+
 class VcrCassMgrCodeLensProvider implements vscode.CodeLensProvider {
     async provideCodeLenses(document: vscode.TextDocument, token: vscode.CancellationToken): Promise<vscode.CodeLens[]> {
         // check if editor filename starts with scanFileNamePrefix
@@ -45,18 +70,10 @@ class VcrCassMgrCodeLensProvider implements vscode.CodeLensProvider {
             return [];
         }
 
-        const workspaceFolderPath = vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders[0].uri.fsPath : '';
-        const workspaceFolderURI = vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders[0].uri : null;
-        let cassetteDir = '';
-        if (workspaceFolderURI) {
-            const files = await vscode.workspace.findFiles(`**/${cassetteDirectoryName}/*`, '**/node_modules/**', 1);
-            if (files.length > 0) {
-                cassetteDir = path.dirname(files[0].fsPath);
-                console.log(`'${cassetteDirectoryName}' directory found at path '${cassetteDir}'`);
-            } else {
-                console.log(`'${cassetteDirectoryName}' directory not found`);
-                return [];
-            }
+        // const cassetteDir = await scanForCassetteDirectory(cassetteDirectoryName);
+        if (!cassetteDir) {
+            console.log(`Skipping vcr decorator scan, '${cassetteDirectoryName}' directory not found`);
+            return [];
         }
 
         const codeLensesArray: vscode.CodeLens[] = [];
