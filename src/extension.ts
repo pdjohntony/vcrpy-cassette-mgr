@@ -6,6 +6,7 @@ let cassetteDirectoryName: string = 'cassettes';
 let vcrDecoratorMatchText: string = '@pytest.mark.vcr';
 let cassetteDir: string | null = null;
 
+
 async function loadConfigOptions() {
     const config = vscode.workspace.getConfiguration('vcrpy-cassette-mgr');
     testFileNameStartsWith = config.get('testFileNameStartsWith') as string;
@@ -44,6 +45,7 @@ export async function activate(context: vscode.ExtensionContext) {
     }));
 }
 
+
 async function scanForCassetteDirectory(dirName: string): Promise<string|null> {
     let cassetteDir = null;
     const workspaceFolderPath = vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders[0].uri.fsPath : '';
@@ -64,13 +66,11 @@ async function scanForCassetteDirectory(dirName: string): Promise<string|null> {
 
 class VcrCassMgrCodeLensProvider implements vscode.CodeLensProvider {
     async provideCodeLenses(document: vscode.TextDocument, token: vscode.CancellationToken): Promise<vscode.CodeLens[]> {
-        // check if editor filename starts with scanFileNamePrefix
+        // check if editor filename starts with testFileNameStartsWith
         if (!path.basename(document.fileName).startsWith(testFileNameStartsWith)) {
             console.log(`Skipping vcr decorator scan, editor filename '${path.basename(document.fileName)}' does not start with '${testFileNameStartsWith}'`);
             return [];
         }
-
-        // const cassetteDir = await scanForCassetteDirectory(cassetteDirectoryName);
         if (!cassetteDir) {
             console.log(`Skipping vcr decorator scan, '${cassetteDirectoryName}' directory not found`);
             return [];
@@ -104,6 +104,7 @@ class VcrCassMgrCodeLensProvider implements vscode.CodeLensProvider {
         return codeLensesArray;
     }
 }
+
 
 async function checkFileAndCreateCodeLens(vcrTestName: string, cassetteFilePath: string, range: vscode.Range, codeLensesArray: vscode.CodeLens[]) {
     try {
