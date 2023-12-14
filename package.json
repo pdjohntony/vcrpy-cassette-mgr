@@ -9,14 +9,22 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": ["onStartupFinished"],
   "main": "./out/extension.js",
   "contributes": {
+    "menus": {
+        "editor/context": [
+            {
+                "command": "vcrpy-mgr.helloWorld",
+                "group": "navigation"
+            }
+        ]
+    },
     "commands": [
-      {
-        "command": "vcrpy-mgr.helloWorld",
-        "title": "VCR.py MGR Test Cmd"
-      }
+        {
+            "command": "vcrpy-mgr.helloWorld",
+            "title": "Vcrpy Mgr: Hello World"
+        }
     ]
   },
   "scripts": {
