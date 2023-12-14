@@ -1,12 +1,25 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 
-let scanFileNamePrefix = 'test';
-let cassetteDirName = 'cassettes';
-let vcrDecoratorTextForRegEx = '@pytest.mark.vcr'; // @vcr.use_cassette
+let config = vscode.workspace.getConfiguration('vcrpy-cassette-mgr');
+let testFileNameStartsWith = config.get('testFileNameStartsWith') as string;
+let cassetteDirectoryName = config.get('cassetteDirectoryName') as string;
+let vcrDecoratorMatchText = config.get('vcrDecoratorMatchText') as string;
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('vcrpy-cassette-mgr extension is now active!');
+
+    // Listen for configuration changes
+    context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
+        if (e.affectsConfiguration('vcrpy-cassette-mgr')) {
+            // The configuration has changed, read the new values
+            let config = vscode.workspace.getConfiguration('vcrpy-cassette-mgr');
+            testFileNameStartsWith = config.get('testFileNameStartsWith') as string;
+            cassetteDirectoryName = config.get('cassetteDirectoryName') as string;
+            vcrDecoratorMatchText = config.get('vcrDecoratorMatchText') as string;
+            console.log(`Configuration changed, new values: testFileNameStartsWith='${testFileNameStartsWith}', cassetteDirectoryName='${cassetteDirectoryName}', vcrDecoratorMatchText='${vcrDecoratorMatchText}'`);
+        }
+    }));
 
     context.subscriptions.push(vscode.languages.registerCodeLensProvider({ language: 'python' }, new VcrCassMgrCodeLensProvider()));
     console.log('Activated vcrpy-cassette-mgr code lens provider!');
@@ -27,8 +40,8 @@ export function activate(context: vscode.ExtensionContext) {
 class VcrCassMgrCodeLensProvider implements vscode.CodeLensProvider {
     async provideCodeLenses(document: vscode.TextDocument, token: vscode.CancellationToken): Promise<vscode.CodeLens[]> {
         // check if editor filename starts with scanFileNamePrefix
-        if (!path.basename(document.fileName).startsWith(scanFileNamePrefix)) {
-            console.log(`Skipping vcr decorator scan, editor filename '${path.basename(document.fileName)}' does not start with '${scanFileNamePrefix}'`);
+        if (!path.basename(document.fileName).startsWith(testFileNameStartsWith)) {
+            console.log(`Skipping vcr decorator scan, editor filename '${path.basename(document.fileName)}' does not start with '${testFileNameStartsWith}'`);
             return [];
         }
 
@@ -36,12 +49,12 @@ class VcrCassMgrCodeLensProvider implements vscode.CodeLensProvider {
         const workspaceFolderURI = vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders[0].uri : null;
         let cassetteDir = '';
         if (workspaceFolderURI) {
-            const files = await vscode.workspace.findFiles(`**/${cassetteDirName}/*`, '**/node_modules/**', 1);
+            const files = await vscode.workspace.findFiles(`**/${cassetteDirectoryName}/*`, '**/node_modules/**', 1);
             if (files.length > 0) {
                 cassetteDir = path.dirname(files[0].fsPath);
-                console.log(`'${cassetteDirName}' directory found at path '${cassetteDir}'`);
+                console.log(`'${cassetteDirectoryName}' directory found at path '${cassetteDir}'`);
             } else {
-                console.log(`'${cassetteDirName}' directory not found`);
+                console.log(`'${cassetteDirectoryName}' directory not found`);
                 return [];
             }
         }
@@ -51,15 +64,15 @@ class VcrCassMgrCodeLensProvider implements vscode.CodeLensProvider {
         // orginal (?<!# *)(@pytest\.mark\.vcr)(?:.|\n|\r)*?def (\w+)\(
         // have to add regex var inside and escape backslashes
         // so \n|\r)*?def (\w+)\( becomes \\n|\\r)*?def (\\w+)\\(
-        let vcrRegex = new RegExp(`(?<!# *)(${vcrDecoratorTextForRegEx})(?:.|\\n|\\r)*?def (\\w+)\\(`, 'g');
-        console.log(vcrRegex);
+        let vcrRegex = new RegExp(`(?<!# *)(${vcrDecoratorMatchText})(?:.|\\n|\\r)*?def (\\w+)\\(`, 'g');
+        // console.log(vcrRegex);
         let match;
         const promises: Promise<void>[] = [];
 
-        console.log(`Searching for '${vcrDecoratorTextForRegEx}' decorators`);
+        console.log(`Searching for '${vcrDecoratorMatchText}' decorators`);
         while ((match = vcrRegex.exec(docText)) !== null) {
             const vcrTestName = match[2];
-            console.log(`Found '${vcrDecoratorTextForRegEx}' on function '${vcrTestName}'`);
+            console.log(`Found '${vcrDecoratorMatchText}' on function '${vcrTestName}'`);
             const startPos = document.positionAt(match.index);
             const endPos = document.positionAt(match.index + match[0].length);
             const range = new vscode.Range(startPos, endPos);
