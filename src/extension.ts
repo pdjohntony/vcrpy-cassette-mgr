@@ -29,13 +29,16 @@ export async function activate(context: vscode.ExtensionContext) {
         }
     }));
 
+    // Code Lens Provider
     context.subscriptions.push(vscode.languages.registerCodeLensProvider({ language: 'python' }, new VcrCassMgrCodeLensProvider()));
     console.log('Activated vcrpy-cassette-mgr code lens provider!');
 
+    // Open Cassette Command
     context.subscriptions.push(vscode.commands.registerCommand('vcrpy-cassette-mgr.openCassette', (uri: vscode.Uri) => {
         vscode.window.showTextDocument(uri);
     }));
 
+    // Delete Cassette Command
     context.subscriptions.push(vscode.commands.registerCommand('vcrpy-cassette-mgr.deleteCassette', async (uri: vscode.Uri) => {
         const result = await vscode.window.showWarningMessage(`Are you sure you want to delete this cassette?\n${uri.path}`, 'Yes', 'No');
         if (result === 'Yes') {
@@ -44,6 +47,7 @@ export async function activate(context: vscode.ExtensionContext) {
         }
     }));
 
+    // Delete Cassettes Current File Command
     context.subscriptions.push(vscode.commands.registerCommand('vcrpy-cassette-mgr.deleteCassettesCurrentFile', async () => {
         const editor = vscode.window.activeTextEditor;
         if (editor) {
@@ -75,6 +79,23 @@ export async function activate(context: vscode.ExtensionContext) {
             }
         }
     }));
+
+    // Delete Cassettes Workspace Command
+    context.subscriptions.push(vscode.commands.registerCommand('vcrpy-cassette-mgr.deleteCassettesAll', async () => {
+        if (cassetteDir === '') {
+            vscode.window.showErrorMessage(`'${cassetteDirectoryName}' directory not found`);
+            return;
+        }
+        const cassettes = await scanForCassettesInDirectory(cassetteDir, testFileNameStartsWith);
+        const result = await vscode.window.showWarningMessage(`Are you sure you want to delete ${cassettes.length} cassettes in the workspace?`, 'Yes', 'No');
+        if (result === 'Yes') {
+            const deletePromises = cassettes.map(async (cassette) => {
+                await vscode.workspace.fs.delete(cassette);
+            });
+            await Promise.all(deletePromises);
+            vscode.window.showInformationMessage(`Deleted ${cassettes.length} cassettes in the workspace`);
+        }
+    }));
 }
 
 
@@ -94,6 +115,15 @@ async function scanForCassetteDirectory(dirName: string): Promise<string> {
         }
     }
     return '';
+}
+
+
+async function scanForCassettesInDirectory(cassetteDir: string, testFileNameStartsWith: string): Promise<vscode.Uri[]> {
+    const pattern = new vscode.RelativePattern(cassetteDir, `${testFileNameStartsWith}*.yaml`);
+    console.log(`Searching for all cassettes in '${cassetteDir}' with pattern '${pattern.pattern}'`);
+    const yamlFiles = await vscode.workspace.findFiles(pattern, '**/node_modules/**', 5000);
+    console.log(`Found ${yamlFiles.length} cassettes`);
+    return yamlFiles;
 }
 
 

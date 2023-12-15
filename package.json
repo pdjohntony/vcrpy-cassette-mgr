@@ -44,10 +44,6 @@
                 "title": "Delete Cassettes in Current File"
             },
             {
-                "command": "vcrpy-cassette-mgr.deleteCassettesCurrentDirectory",
-                "title": "Delete Cassettes in Current Directory"
-            },
-            {
                 "command": "vcrpy-cassette-mgr.deleteCassettesAll",
                 "title": "Delete Cassettes in Workspace"
             }
