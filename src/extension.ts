@@ -43,6 +43,38 @@ export async function activate(context: vscode.ExtensionContext) {
             vscode.window.showInformationMessage('Deleted ' + uri.path);
         }
     }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('vcrpy-cassette-mgr.deleteCassettesCurrentFile', async () => {
+        const editor = vscode.window.activeTextEditor;
+        if (editor) {
+            const vcrDecoratorsArray = searchForVcrDecorators(editor.document);
+            const cassettePromises = vcrDecoratorsArray.map(async (vcrDecorator) => {
+                const cassetteFilePath = path.join(cassetteDir, `${vcrDecorator.vcrTestName}.yaml`);
+                const exists = await checkFile(cassetteFilePath);
+                if (exists) {
+                    return cassetteFilePath;
+                }
+            });
+            const cassettesArray = await Promise.all(cassettePromises);
+            // delete empty strings from array
+            cassettesArray.forEach((element, index) => {
+                if (element === undefined) {
+                    cassettesArray.splice(index, 1);
+                }
+            });
+            console.log(`Found ${cassettesArray.length} cassettes for ${editor.document.fileName}`);
+            const result = await vscode.window.showWarningMessage(`Are you sure you want to delete ${cassettesArray.length} cassettes for this file?`, 'Yes', 'No');
+            if (result === 'Yes') {
+                const deletePromises = cassettesArray.map(async (cassetteFilePath) => {
+                    if (cassetteFilePath) {
+                        await vscode.workspace.fs.delete(vscode.Uri.file(cassetteFilePath));
+                    }
+                });
+                await Promise.all(deletePromises);
+                vscode.window.showInformationMessage(`Deleted ${cassettesArray.length} cassettes for this file`);
+            }
+        }
+    }));
 }
 
 
@@ -84,7 +116,7 @@ class VcrCassMgrCodeLensProvider implements vscode.CodeLensProvider {
             return [];
         }
 
-        const vcrDecoratorsArray = searchForVcrDecorators(document, token);
+        const vcrDecoratorsArray = searchForVcrDecorators(document);
 
         const codeLensesPromises = vcrDecoratorsArray.map(async (vcrDecorator) => {
             const cassetteFilePath = path.join(cassetteDir, `${vcrDecorator.vcrTestName}.yaml`);
@@ -124,10 +156,9 @@ class VcrCassMgrCodeLensProvider implements vscode.CodeLensProvider {
  * Searches for VCR decorators in the given text document.
  * 
  * @param document - The text document to search in.
- * @param token - The cancellation token.
  * @returns An array of objects representing the found VCR decorators, each containing the VCR test name and the range of the decorator in the document.
  */
-function searchForVcrDecorators(document: vscode.TextDocument, token: vscode.CancellationToken): VcrDecorator[] {
+function searchForVcrDecorators(document: vscode.TextDocument): VcrDecorator[] {
     const vcrDecoratorsArray = [];
     const docText = document.getText();
     // orginal (?<!# *)(@pytest\.mark\.vcr)(?:.|\n|\r)*?def (\w+)\(
