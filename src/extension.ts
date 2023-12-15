@@ -147,11 +147,13 @@ class VcrCassMgrCodeLensProvider implements vscode.CodeLensProvider {
         }
 
         const vcrDecoratorsArray = searchForVcrDecorators(document);
+        let cassetteCount = 0;
 
         const codeLensesPromises = vcrDecoratorsArray.map(async (vcrDecorator) => {
             const cassetteFilePath = path.join(cassetteDir, `${vcrDecorator.vcrTestName}.yaml`);
             const exists = await checkFile(cassetteFilePath);
             if (exists) {
+                cassetteCount++;
                 const openCommand = new vscode.CodeLens(vcrDecorator.range, {
                     title: 'Open cassette',
                     command: 'vcrpy-cassette-mgr.openCassette',
@@ -170,6 +172,9 @@ class VcrCassMgrCodeLensProvider implements vscode.CodeLensProvider {
                 });
                 return [codeLens];
             }
+        });
+        Promise.all(codeLensesPromises).then(() => {
+            console.log(`Found ${cassetteCount} cassettes`);
         });
     
         const codeLensesArrays = await Promise.all(codeLensesPromises);
@@ -221,10 +226,10 @@ async function checkFile(cassetteFilePath: string): Promise<boolean> {
         // Await the stat method to check if the file exists
         await vscode.workspace.fs.stat(vscode.Uri.file(cassetteFilePath));
 
-        console.log(`Cassette found '${cassetteFilePath}'`);
+        // console.log(`Cassette found '${cassetteFilePath}'`);
         return true;
     } catch (error) {
-        console.log(`Cassette not found '${cassetteFilePath}'`);
+        // console.log(`Cassette not found '${cassetteFilePath}'`);
         return false;
     }
 }
