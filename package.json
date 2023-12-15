@@ -1,14 +1,33 @@
 {
     "name": "vcrpy-cassette-mgr",
-    "displayName": "VCR.py Cassette Manager",
-    "description": "Easily open and delete vcrpy cassettes within your tests",
     "version": "1.0.0",
+    "displayName": "VCR.py Cassette Manager",
+    "description": "Open or delete vcrpy cassettes within your tests",
+    "publisher": "pdjohntony",
+    "author": {
+        "name": "Phill Johntony",
+        "email": "pdjohntony@gmail.com"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/pdjohntony/vcrpy-cassette-mgr.git"
+    },
+    "icon": "images/icon.png",
+    "categories": [
+        "Other",
+        "Testing"
+    ],
+    "keywords": [
+        "cassette",
+        "vcrpy",
+        "manager",
+        "pytest",
+        "pytest-vcr",
+        "delete"
+    ],
     "engines": {
         "vscode": "^1.85.0"
     },
-    "categories": [
-        "Other"
-    ],
     "activationEvents": ["onStartupFinished"],
     "main": "./out/extension.js",
     "contributes": {
