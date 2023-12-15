@@ -1,4 +1,4 @@
-# VCR.py Cassette Manager
+# VCR.py Cassette Manager Extension for Visual Studio Code
 
 Easily open or delete vcrpy cassettes within your tests. Bulk delete cassettes from the current file or the entire workspace.
 
