@@ -79,35 +79,23 @@ class VcrCassMgrCodeLensProvider implements vscode.CodeLensProvider {
 
         const vcrDecoratorsArray = searchForVcrDecorators(document, token);
 
-        // const docText = document.getText();
-        // // orginal (?<!# *)(@pytest\.mark\.vcr)(?:.|\n|\r)*?def (\w+)\(
-        // // have to add regex var inside and escape backslashes
-        // // so \n|\r)*?def (\w+)\( becomes \\n|\\r)*?def (\\w+)\\(
-        // let vcrRegex = new RegExp(`(?<!# *)(${vcrDecoratorMatchText})(?:.|\\n|\\r)*?def (\\w+)\\(`, 'g');
-        // // console.log(vcrRegex);
-        // let match;
-        // const promises: Promise<void>[] = [];
+        const promises: Promise<void>[] = [];
 
-        // console.log(`Searching for '${vcrDecoratorMatchText}' decorators`);
-        // while ((match = vcrRegex.exec(docText)) !== null) {
-        //     const vcrTestName = match[2];
-        //     console.log(`Found '${vcrDecoratorMatchText}' on function '${vcrTestName}'`);
-        //     const startPos = document.positionAt(match.index);
-        //     const endPos = document.positionAt(match.index + match[0].length);
-        //     const range = new vscode.Range(startPos, endPos);
-            
-        //     // Check if a cassette file exists, add a code lens
-        //     const cassetteFilePath = path.join(cassetteDir, `${vcrTestName}.yaml`);
-        //     // console.log(`Checking for cassette file '${cassetteFilePath}'`);
-        //     promises.push(checkFileAndCreateCodeLens(vcrTestName, cassetteFilePath, range, codeLensesArray));
-        // }
-        // console.log(`Decorator search complete`);
+        for (const vcrDecorator of vcrDecoratorsArray) {
+            checkFile(vcrDecorator.vcrTestName, cassetteDir);
+        }
+
+        checkFile('test', cassetteDir);
         // await Promise.all(promises);
         return codeLensesArray;
     }
 }
 
 
+interface VcrDecorator {
+    vcrTestName: string;
+    range: vscode.Range;
+}
 /**
  * Searches for VCR decorators in the given text document.
  * 
@@ -115,7 +103,7 @@ class VcrCassMgrCodeLensProvider implements vscode.CodeLensProvider {
  * @param token - The cancellation token.
  * @returns An array of objects representing the found VCR decorators, each containing the VCR test name and the range of the decorator in the document.
  */
-function searchForVcrDecorators(document: vscode.TextDocument, token: vscode.CancellationToken): Array<Object> {
+function searchForVcrDecorators(document: vscode.TextDocument, token: vscode.CancellationToken): VcrDecorator[] {
     const vcrDecoratorsArray = [];
     const docText = document.getText();
     // orginal (?<!# *)(@pytest\.mark\.vcr)(?:.|\n|\r)*?def (\w+)\(
@@ -133,11 +121,26 @@ function searchForVcrDecorators(document: vscode.TextDocument, token: vscode.Can
         const endPos = document.positionAt(match.index + match[0].length);
         const range = new vscode.Range(startPos, endPos);
         
-        vcrDecoratorsArray.push({vcrTestName: vcrTestName, range: range});
+        vcrDecoratorsArray.push({"vcrTestName": vcrTestName, "range": range});
     }
     console.log(`Found ${vcrDecoratorsArray.length} decorators`);
-    // console.log(vcrDecoratorsArray);
+    console.log(vcrDecoratorsArray);
     return vcrDecoratorsArray;
+}
+
+
+async function checkFile(vcrTestName: string, cassetteDir: string) {
+    const cassetteFilePath = path.join(cassetteDir, `${vcrTestName}.yaml`);
+    try {
+        // console.log(`Checking for cassette file '${cassetteFilePath}'`);
+
+        // Await the stat method to check if the file exists
+        await vscode.workspace.fs.stat(vscode.Uri.file(cassetteFilePath));
+
+        console.log(`Cassette found '${cassetteFilePath}'`);
+    } catch (error) {
+        console.log(`Cassette not found '${cassetteFilePath}'`);
+    }
 }
 
 
