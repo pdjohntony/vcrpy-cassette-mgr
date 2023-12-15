@@ -108,6 +108,13 @@ class VcrCassMgrCodeLensProvider implements vscode.CodeLensProvider {
 }
 
 
+/**
+ * Searches for VCR decorators in the given text document.
+ * 
+ * @param document - The text document to search in.
+ * @param token - The cancellation token.
+ * @returns An array of objects representing the found VCR decorators, each containing the VCR test name and the range of the decorator in the document.
+ */
 function searchForVcrDecorators(document: vscode.TextDocument, token: vscode.CancellationToken): Array<Object> {
     const vcrDecoratorsArray = [];
     const docText = document.getText();
