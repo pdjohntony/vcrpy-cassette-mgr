@@ -16,7 +16,7 @@ Easily open or delete vcrpy cassettes within your tests. Bulk delete cassettes f
 
 ## Requirements
 
-* Python language mode most be selected for the active file.
+* Python language mode must be selected for the active file.
 * Only scans for cassettes in files that start with `test_`. (can be changed with `testFileNameStartsWith` setting)
 * Cassette names must match their function name.
 
