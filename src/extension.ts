@@ -4,6 +4,7 @@ import * as path from 'path';
 let testFileNameStartsWith: string = 'test_';
 let cassetteDirectoryName: string = 'cassettes';
 let vcrDecoratorMatchText: string = '@pytest.mark.vcr';
+let deleteConfirmation: number = 3;
 let cassetteDir: string = '';
 
 
@@ -12,7 +13,8 @@ async function loadConfigOptions() {
     testFileNameStartsWith = config.get('testFileNameStartsWith') as string;
     cassetteDirectoryName = config.get('cassetteDirectoryName') as string;
     vcrDecoratorMatchText = config.get('vcrDecoratorMatchText') as string;
-    console.log(`Configuration loaded, values: testFileNameStartsWith='${testFileNameStartsWith}', cassetteDirectoryName='${cassetteDirectoryName}', vcrDecoratorMatchText='${vcrDecoratorMatchText}'`);
+    deleteConfirmation = config.get('deleteConfirmation') as number;
+    console.log(`Configuration loaded, values: testFileNameStartsWith='${testFileNameStartsWith}', cassetteDirectoryName='${cassetteDirectoryName}', vcrDecoratorMatchText='${vcrDecoratorMatchText}', deleteConfirmation='${deleteConfirmation}'`);
     cassetteDir = await scanForCassetteDirectory(cassetteDirectoryName);
 }
 
@@ -40,10 +42,17 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // Delete Cassette Command
     context.subscriptions.push(vscode.commands.registerCommand('vcrpy-cassette-mgr.deleteCassette', async (uri: vscode.Uri) => {
-        const result = await vscode.window.showWarningMessage(`Are you sure you want to delete this cassette?\n${uri.path}`, 'Yes', 'No');
-        if (result === 'Yes') {
+        let deleteConfirmationResult = undefined;
+        // if deleteConfirmation is 3, ask for confirmation
+        if (deleteConfirmation === 3) {
+            deleteConfirmationResult = await vscode.window.showWarningMessage(`Are you sure you want to delete this cassette?\n${uri.path}`, 'Yes', 'No');
+        } else {
+            deleteConfirmationResult = 'Yes';
+        }
+        if (deleteConfirmationResult === 'Yes') {
             await vscode.workspace.fs.delete(uri);
             vscode.window.showInformationMessage('Deleted ' + uri.path);
+            deleteConfirmationResult = undefined;
         }
     }));
 
@@ -67,8 +76,14 @@ export async function activate(context: vscode.ExtensionContext) {
                 }
             });
             console.log(`Found ${cassettesArray.length} cassettes for ${editor.document.fileName}`);
-            const result = await vscode.window.showWarningMessage(`Are you sure you want to delete ${cassettesArray.length} cassettes for this file?`, 'Yes', 'No');
-            if (result === 'Yes') {
+            let deleteConfirmationResult = undefined;
+            // if deleteConfirmation is 2 or higher, ask for confirmation
+            if (deleteConfirmation >= 2) {
+                deleteConfirmationResult = await vscode.window.showWarningMessage(`Are you sure you want to delete ${cassettesArray.length} cassettes for this file?`, 'Yes', 'No');
+            } else {
+                deleteConfirmationResult = 'Yes';
+            }
+            if (deleteConfirmationResult === 'Yes') {
                 const deletePromises = cassettesArray.map(async (cassetteFilePath) => {
                     if (cassetteFilePath) {
                         await vscode.workspace.fs.delete(vscode.Uri.file(cassetteFilePath));
@@ -76,6 +91,7 @@ export async function activate(context: vscode.ExtensionContext) {
                 });
                 await Promise.all(deletePromises);
                 vscode.window.showInformationMessage(`Deleted ${cassettesArray.length} cassettes for this file`);
+                deleteConfirmationResult = undefined;
             }
         }
     }));
@@ -87,13 +103,20 @@ export async function activate(context: vscode.ExtensionContext) {
             return;
         }
         const cassettes = await scanForCassettesInDirectory(cassetteDir, testFileNameStartsWith);
-        const result = await vscode.window.showWarningMessage(`Are you sure you want to delete ${cassettes.length} cassettes in the workspace?`, 'Yes', 'No');
-        if (result === 'Yes') {
+        let deleteConfirmationResult = undefined;
+        // if deleteConfirmation is 1 or higher, ask for confirmation
+        if (deleteConfirmation >= 1) {
+            deleteConfirmationResult = await vscode.window.showWarningMessage(`Are you sure you want to delete ${cassettes.length} cassettes in the workspace?`, 'Yes', 'No');
+        } else {
+            deleteConfirmationResult = 'Yes';
+        }
+        if (deleteConfirmationResult === 'Yes') {
             const deletePromises = cassettes.map(async (cassette) => {
                 await vscode.workspace.fs.delete(cassette);
             });
             await Promise.all(deletePromises);
             vscode.window.showInformationMessage(`Deleted ${cassettes.length} cassettes in the workspace`);
+            deleteConfirmationResult = undefined;
         }
     }));
 }

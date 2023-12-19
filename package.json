@@ -51,6 +51,24 @@
                     "default": "@pytest.mark.vcr",
                     "minLength": 1,
                     "description": "The text that should be matched to determine if a line is a vcrpy decorator. The default is for pytest, but can be changed to match any decorator such as `@vcr.use_cassette`."
+                },
+                "vcrpy-cassette-mgr.deleteConfirmation": {
+                    "type": "number",
+                    "default": 3,
+                    "enum": [0, 1, 2, 3],
+                    "enumItemLabels": [
+                        "Never",
+                        "Workspace",
+                        "Workspace, Current File",
+                        "Workspace, Current File, Tests"
+                    ],
+                    "enumDescriptions": [
+                        "No confirmation needed before deleting any cassettes",
+                        "Confirm before bulk deleting cassettes in the workspace",
+                        "Confirm before bulk deleting cassettes in the workspace or current file",
+                        "Confirm before deleting any cassettes"
+                    ],
+                    "description": "Choose when to confirm before deleting cassettes."
                 }
             }
         },
