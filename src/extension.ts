@@ -99,6 +99,7 @@ export async function activate(context: vscode.ExtensionContext) {
                     cassettesArray.splice(index, 1);
                 }
             });
+            //! This is showing 1 cassette when there are none
             console.log(`Found ${cassettesArray.length} cassettes for ${editor.document.fileName}`);
             let deleteConfirmationResult = undefined;
             // if deleteConfirmation is 2 or higher, ask for confirmation
@@ -143,6 +144,24 @@ export async function activate(context: vscode.ExtensionContext) {
             deleteConfirmationResult = undefined;
         }
     }));
+
+    vscode.commands.registerCommand('vcrpy-cassette-mgr.cassetteOptions', async () => {
+        const options = ['Delete Cassettes in Current File', 'Delete Cassettes in Workspace'];
+        const selectedOption = await vscode.window.showQuickPick(options, {
+            placeHolder: 'Select an option',
+        });
+
+        if (selectedOption) {
+            switch (selectedOption) {
+                case 'Delete Cassettes in Current File':
+                    vscode.commands.executeCommand('vcrpy-cassette-mgr.deleteCassettesCurrentFile');
+                    break;
+                case 'Delete Cassettes in Workspace':
+                    vscode.commands.executeCommand('vcrpy-cassette-mgr.deleteCassettesAll');
+                    break;
+            }
+        }
+    });
 }
 
 
@@ -250,6 +269,7 @@ export class VcrCassMgrCodeLensProvider implements vscode.CodeLensProvider {
     }
     public updateCassetteCount(cassetteCount: number) {
         this.cassetteCounter.text = `Cassettes: ${cassetteCount}`;
+        this.cassetteCounter.command = 'vcrpy-cassette-mgr.cassetteOptions';
     }
 }
 
