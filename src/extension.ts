@@ -35,8 +35,28 @@ export async function activate(context: vscode.ExtensionContext) {
         }
     }));
 
+    // Create the cassetteCounter status bar item
+    let cassetteCounter = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
+    cassetteCounter.show();
+    context.subscriptions.push(cassetteCounter);
+
+    // Update the visibility of the cassetteCounter when the active editor changes
+    context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(editor => {
+        if (editor && editor.document.languageId === 'python') {
+            cassetteCounter.show();
+        } else {
+            cassetteCounter.hide();
+        }
+    }));
+
+    // Show the cassetteCounter if a Python file is currently open
+    if (vscode.window.activeTextEditor && vscode.window.activeTextEditor.document.languageId === 'python') {
+        cassetteCounter.show();
+    }
+
     // Code Lens Provider
-    context.subscriptions.push(vscode.languages.registerCodeLensProvider({ language: 'python' }, new VcrCassMgrCodeLensProvider()));
+    let codeLensProvider = new VcrCassMgrCodeLensProvider(cassetteCounter);
+    context.subscriptions.push(vscode.languages.registerCodeLensProvider({ language: 'python' }, codeLensProvider));
     console.log('Activated vcrpy-cassette-mgr code lens provider!');
 
     // Open Cassette Command
@@ -160,12 +180,13 @@ interface VcrDecorator {
 }
 
 
-class VcrCassMgrCodeLensProvider implements vscode.CodeLensProvider {
+export class VcrCassMgrCodeLensProvider implements vscode.CodeLensProvider {
     async provideCodeLenses(document: vscode.TextDocument, token: vscode.CancellationToken): Promise<vscode.CodeLens[]> {
         let codeLensesArray: vscode.CodeLens[] = [];
         // check if editor filename starts with testFileNameStartsWith
         if (!path.basename(document.fileName).startsWith(testFileNameStartsWith)) {
             console.log(`Skipping vcr decorator scan, '${path.basename(document.fileName)}' does not start with '${testFileNameStartsWith}'`);
+            this.cassetteCounter.hide();
             return [];
         }
         if (cassetteDir === '') {
@@ -207,6 +228,7 @@ class VcrCassMgrCodeLensProvider implements vscode.CodeLensProvider {
                     codeLensItems.push(noCassetteCommand);
                 }
             }
+            this.updateCassetteCount(cassetteCount);
             return codeLensItems;
         });
         Promise.all(codeLensesPromises).then(() => {
@@ -219,6 +241,15 @@ class VcrCassMgrCodeLensProvider implements vscode.CodeLensProvider {
         // console.log(codeLensesArray);
         console.log(`Returning ${codeLensesArray.length} code lenses`);
         return codeLensesArray;
+    }
+
+    // Status bar item
+    private cassetteCounter: vscode.StatusBarItem;
+    constructor(cassetteCounter: vscode.StatusBarItem) {
+        this.cassetteCounter = cassetteCounter;
+    }
+    public updateCassetteCount(cassetteCount: number) {
+        this.cassetteCounter.text = `Cassettes: ${cassetteCount}`;
     }
 }
 
