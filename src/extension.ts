@@ -79,6 +79,10 @@ export async function activate(context: vscode.ExtensionContext) {
             await vscode.workspace.fs.delete(uri);
             vscode.window.showInformationMessage('Deleted ' + uri.path);
             deleteConfirmationResult = undefined;
+            // Refresh code lenses
+            codeLensProviderDisposable.dispose();
+            codeLensProviderDisposable = vscode.languages.registerCodeLensProvider({ language: 'python' }, codeLensProvider);
+            context.subscriptions.push(codeLensProviderDisposable);
         }
     }));
 
@@ -119,6 +123,10 @@ export async function activate(context: vscode.ExtensionContext) {
                 await Promise.all(deletePromises);
                 vscode.window.showInformationMessage(`Deleted ${cassettesArray.length} cassettes for this file`);
                 deleteConfirmationResult = undefined;
+                // Refresh code lenses
+            codeLensProviderDisposable.dispose();
+            codeLensProviderDisposable = vscode.languages.registerCodeLensProvider({ language: 'python' }, codeLensProvider);
+            context.subscriptions.push(codeLensProviderDisposable);
             }
         }
     }));
@@ -144,6 +152,10 @@ export async function activate(context: vscode.ExtensionContext) {
             await Promise.all(deletePromises);
             vscode.window.showInformationMessage(`Deleted ${cassettes.length} cassettes in the workspace`);
             deleteConfirmationResult = undefined;
+            // Refresh code lenses
+            codeLensProviderDisposable.dispose();
+            codeLensProviderDisposable = vscode.languages.registerCodeLensProvider({ language: 'python' }, codeLensProvider);
+            context.subscriptions.push(codeLensProviderDisposable);
         }
     }));
 
