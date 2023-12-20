@@ -291,6 +291,8 @@ export class VcrCassMgrCodeLensProvider implements vscode.CodeLensProvider {
     public updateCassetteCount(cassetteCount: number = 0, cassetteDirFound: boolean = true) {
         if (cassetteDirFound) {
             this.cassetteCounter.text = `Cassettes: ${cassetteCount}`;
+            this.cassetteCounter.tooltip = 'Cassette Manager Options';
+            this.cassetteCounter.backgroundColor = undefined;
             this.cassetteCounter.command = {
                 command: 'vcrpy-cassette-mgr.cassetteOptions',
                 title: 'Cassette Options',
@@ -298,6 +300,9 @@ export class VcrCassMgrCodeLensProvider implements vscode.CodeLensProvider {
             };
         } else {
             this.cassetteCounter.text = `${cassetteDirectoryName} directory not found`;
+            this.cassetteCounter.tooltip = 'Cassette Manager Options';
+            this.cassetteCounter.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+            // this.cassetteCounter.color = new vscode.ThemeColor('statusBarItem.warningBackground');
             this.cassetteCounter.command = {
                 command: 'vcrpy-cassette-mgr.cassetteOptions',
                 title: 'Cassette Options',
