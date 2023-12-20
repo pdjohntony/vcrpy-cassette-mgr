@@ -25,6 +25,7 @@ async function loadConfigOptions() {
 
 export async function activate(context: vscode.ExtensionContext) {
     console.log('vcrpy-cassette-mgr extension is now active!');
+    let codeLensProviderDisposable: vscode.Disposable;
 
     await loadConfigOptions();
 
@@ -56,7 +57,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // Code Lens Provider
     let codeLensProvider = new VcrCassMgrCodeLensProvider(cassetteCounter);
-    context.subscriptions.push(vscode.languages.registerCodeLensProvider({ language: 'python' }, codeLensProvider));
+    codeLensProviderDisposable = vscode.languages.registerCodeLensProvider({ language: 'python' }, codeLensProvider);
+    context.subscriptions.push(codeLensProviderDisposable);
     console.log('Activated vcrpy-cassette-mgr code lens provider!');
 
     // Open Cassette Command
@@ -145,19 +147,37 @@ export async function activate(context: vscode.ExtensionContext) {
         }
     }));
 
-    vscode.commands.registerCommand('vcrpy-cassette-mgr.cassetteOptions', async () => {
-        const options = ['Delete Cassettes in Current File', 'Delete Cassettes in Workspace'];
-        const selectedOption = await vscode.window.showQuickPick(options, {
+    vscode.commands.registerCommand('vcrpy-cassette-mgr.cassetteOptions', async (cassetteDirFound: boolean) => {
+        let qpOptions = [''];
+        if (cassetteDirFound) {
+            qpOptions = ['Delete Cassettes in Current File', 'Delete Cassettes in Workspace', `Rescan Cassettes in '${cassetteDirectoryName}' directory`, 'Configure Cassette Manager'];
+        } else {
+            qpOptions = [`Rescan Cassettes in '${cassetteDirectoryName}' directory`, 'Configure Cassette Manager'];
+        }
+        const selectedOption = await vscode.window.showQuickPick(qpOptions, {
             placeHolder: 'Select an option',
         });
 
         if (selectedOption) {
             switch (selectedOption) {
+                case `Rescan Cassettes in '${cassetteDirectoryName}' directory`:
+                    codeLensProviderDisposable.dispose();
+                    codeLensProviderDisposable = vscode.languages.registerCodeLensProvider({ language: 'python' }, codeLensProvider);
+                    context.subscriptions.push(codeLensProviderDisposable);
+                    if (cassetteDir !== '') {
+                        vscode.window.showInformationMessage(`Cassette '${cassetteDirectoryName}' directory found`);
+                    } else {
+                        vscode.window.showErrorMessage(`Cassette '${cassetteDirectoryName}' directory not found`);
+                    }
+                    break;
                 case 'Delete Cassettes in Current File':
                     vscode.commands.executeCommand('vcrpy-cassette-mgr.deleteCassettesCurrentFile');
                     break;
                 case 'Delete Cassettes in Workspace':
                     vscode.commands.executeCommand('vcrpy-cassette-mgr.deleteCassettesAll');
+                    break;
+                case 'Configure Cassette Manager':
+                    vscode.commands.executeCommand('workbench.action.openSettings', '@ext:pdjohntony.vcrpy-cassette-mgr');
                     break;
             }
         }
@@ -271,10 +291,18 @@ export class VcrCassMgrCodeLensProvider implements vscode.CodeLensProvider {
     public updateCassetteCount(cassetteCount: number = 0, cassetteDirFound: boolean = true) {
         if (cassetteDirFound) {
             this.cassetteCounter.text = `Cassettes: ${cassetteCount}`;
-            this.cassetteCounter.command = 'vcrpy-cassette-mgr.cassetteOptions';
+            this.cassetteCounter.command = {
+                command: 'vcrpy-cassette-mgr.cassetteOptions',
+                title: 'Cassette Options',
+                arguments: [cassetteDirFound]
+            };
         } else {
             this.cassetteCounter.text = `${cassetteDirectoryName} directory not found`;
-            this.cassetteCounter.command = '';
+            this.cassetteCounter.command = {
+                command: 'vcrpy-cassette-mgr.cassetteOptions',
+                title: 'Cassette Options',
+                arguments: [cassetteDirFound]
+            };
         }
     }
 }
