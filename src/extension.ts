@@ -210,6 +210,7 @@ export class VcrCassMgrCodeLensProvider implements vscode.CodeLensProvider {
         }
         if (cassetteDir === '') {
             console.log(`Skipping vcr decorator scan, '${cassetteDirectoryName}' is empty`);
+            this.updateCassetteCount(0, false);
             return [];
         }
 
@@ -267,9 +268,14 @@ export class VcrCassMgrCodeLensProvider implements vscode.CodeLensProvider {
     constructor(cassetteCounter: vscode.StatusBarItem) {
         this.cassetteCounter = cassetteCounter;
     }
-    public updateCassetteCount(cassetteCount: number) {
-        this.cassetteCounter.text = `Cassettes: ${cassetteCount}`;
-        this.cassetteCounter.command = 'vcrpy-cassette-mgr.cassetteOptions';
+    public updateCassetteCount(cassetteCount: number = 0, cassetteDirFound: boolean = true) {
+        if (cassetteDirFound) {
+            this.cassetteCounter.text = `Cassettes: ${cassetteCount}`;
+            this.cassetteCounter.command = 'vcrpy-cassette-mgr.cassetteOptions';
+        } else {
+            this.cassetteCounter.text = `${cassetteDirectoryName} directory not found`;
+            this.cassetteCounter.command = '';
+        }
     }
 }
 
