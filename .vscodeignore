@@ -9,3 +9,9 @@ vsc-extension-quickstart.md
 **/*.map
 **/*.ts
 **/.vscode-test.*
+**/*.vsix
+**/*.local.*
+**/*.stg
+**/*.gif
+**/*.png
+!images/icon.png
