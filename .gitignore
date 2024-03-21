@@ -4,3 +4,6 @@ node_modules
 .vscode-test/
 *.vsix
 *.local.md
+
+# screentogif project files
+*.stg
