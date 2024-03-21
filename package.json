@@ -1,6 +1,6 @@
 {
     "name": "vcrpy-cassette-mgr",
-    "version": "1.1.1",
+    "version": "1.1.2",
     "displayName": "VCR.py Cassette Manager",
     "description": "Open or delete vcrpy cassettes within your tests",
     "publisher": "pdjohntony",
