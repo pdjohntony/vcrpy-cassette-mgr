@@ -49,7 +49,7 @@ None at this time.
 
 ## Release Notes
 
-### [1.1.1] - 2024-03-21
+### [1.1.2] - 2024-03-21
 
 Added planned features section to README.
 
