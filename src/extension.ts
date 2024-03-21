@@ -65,23 +65,28 @@ export async function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(codeLensProviderDisposable);
     console.log('Activated vcrpy-cassette-mgr code lens provider!');
 
-    // Open Cassette Command
-    context.subscriptions.push(vscode.commands.registerCommand('vcrpy-cassette-mgr.openCassette', (uri: vscode.Uri) => {
-        vscode.window.showTextDocument(uri);
+    // Open Cassette(s) Command
+    context.subscriptions.push(vscode.commands.registerCommand('vcrpy-cassette-mgr.openCassette', (uris: vscode.Uri[]) => {
+        for (const uri of uris) {
+            // must use preview: false to open multiple files
+            vscode.window.showTextDocument(uri, { preview: false });
+        }
     }));
 
-    // Delete Cassette Command
-    context.subscriptions.push(vscode.commands.registerCommand('vcrpy-cassette-mgr.deleteCassette', async (uri: vscode.Uri) => {
+    // Delete Cassette(s) Command
+    context.subscriptions.push(vscode.commands.registerCommand('vcrpy-cassette-mgr.deleteCassette', async (uris: vscode.Uri[]) => {
         let deleteConfirmationResult = undefined;
-        // if deleteConfirmation is 3, ask for confirmation
+        // if deleteConfirmation setting is 3 (individual test cassette deletion confirm), ask for confirmation
         if (deleteConfirmation === 3) {
-            deleteConfirmationResult = await vscode.window.showWarningMessage(`Are you sure you want to delete this cassette?\n${uri.path}`, 'Yes', 'No');
+            deleteConfirmationResult = await vscode.window.showWarningMessage(`Are you sure you want to delete ${uris.length} cassette(s)?\n${uris.map(uri => uri.path).join('\n')}`, 'Yes', 'No');
         } else {
             deleteConfirmationResult = 'Yes';
         }
         if (deleteConfirmationResult === 'Yes') {
-            await vscode.workspace.fs.delete(uri);
-            vscode.window.showInformationMessage('Deleted ' + uri.path);
+            for (const uri of uris) {
+                await vscode.workspace.fs.delete(uri);
+                vscode.window.showInformationMessage('Deleted ' + uri.path);
+            }
             deleteConfirmationResult = undefined;
             // Refresh code lenses
             codeLensProviderDisposable.dispose();
@@ -253,33 +258,32 @@ export class VcrCassMgrCodeLensProvider implements vscode.CodeLensProvider {
         const vcrDecoratorsArray = searchForVcrDecorators(document);
         let cassetteCount = 0;
 
+        // Iterate through each vcr decorator, look for matching cassettes and create code lenses
         const codeLensesPromises = vcrDecoratorsArray.map(async (vcrDecorator) => {
             const cassetteDirPath = path.join(cassetteDir);
             const files = await readdir(cassetteDirPath);
             const matchingFiles = files.filter(file => file.startsWith(`${vcrDecorator.vcrTestName}`) && file.endsWith('.yaml'));
             let codeLensItems = [];
-            for (const file of matchingFiles) {
-                const cassetteFilePath = path.join(cassetteDir, file);
-                cassetteCount++;
-                if (cassetteButtonOpen) {
-                    const openCommand = new vscode.CodeLens(vcrDecorator.range, {
-                        title: 'Open cassette',
-                        command: 'vcrpy-cassette-mgr.openCassette',
-                        arguments: [vscode.Uri.file(cassetteFilePath)]
-                    });
-                    codeLensItems.push(openCommand);
-                }
-                if (cassetteButtonDelete) {
-                    const deleteCommand = new vscode.CodeLens(vcrDecorator.range, {
-                        title: 'Delete cassette',
-                        command: 'vcrpy-cassette-mgr.deleteCassette',
-                        arguments: [vscode.Uri.file(cassetteFilePath)]
-                    });
-                    codeLensItems.push(deleteCommand);
-                }
+            const cassetteCount = matchingFiles.length;
+            const cassetteFilePaths = matchingFiles.map(file => vscode.Uri.file(path.join(cassetteDir, file)));
+            if (cassetteCount > 0) {
+                const openTitle = cassetteCount === 1 ? 'Open cassette' : `Open ${cassetteCount} cassettes`;
+                const deleteTitle = cassetteCount === 1 ? 'Delete cassette' : `Delete ${cassetteCount} cassettes`;
+                const openCommand = new vscode.CodeLens(vcrDecorator.range, {
+                    title: openTitle,
+                    command: 'vcrpy-cassette-mgr.openCassette',
+                    arguments: [cassetteFilePaths]
+                });
+                codeLensItems.push(openCommand);
+                const deleteCommand = new vscode.CodeLens(vcrDecorator.range, {
+                    title: deleteTitle,
+                    command: 'vcrpy-cassette-mgr.deleteCassette',
+                    arguments: [cassetteFilePaths]
+                });
+                codeLensItems.push(deleteCommand);
             }
             // if matchingFiles is 0, add a no cassette found code lens
-            if (matchingFiles.length === 0) {
+            if (cassetteCount === 0) {
                 if (cassetteButtonOpen || cassetteButtonDelete) {
                     const noCassetteCommand = new vscode.CodeLens(vcrDecorator.range, {
                         title: 'No cassette found',
