@@ -99,23 +99,26 @@ export async function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.commands.registerCommand('vcrpy-cassette-mgr.deleteCassettesCurrentFile', async () => {
         const editor = vscode.window.activeTextEditor;
         if (editor) {
+            // search for vcr decorators in the current file
             const vcrDecoratorsArray = searchForVcrDecorators(editor.document);
+            
+            // iterate through each vcr decorator
             const cassettePromises = vcrDecoratorsArray.map(async (vcrDecorator) => {
-                const cassetteFilePath = path.join(cassetteDir, `${vcrDecorator.vcrTestName}.yaml`);
-                const exists = await checkFile(cassetteFilePath);
-                if (exists) {
-                    return cassetteFilePath;
-                }
+                // look for matching cassettes based on vcrDecorator.vcrTestName
+                const cassetteDirPath = path.join(cassetteDir);
+                const files = await readdir(cassetteDirPath);
+                const matchingFiles = files.filter(file => file.startsWith(`${vcrDecorator.vcrTestName}`) && file.endsWith('.yaml'));
+                return matchingFiles.map(file => vscode.Uri.file(path.join(cassetteDir, file)));
             });
-            const cassettesArray = await Promise.all(cassettePromises);
-            // delete empty strings from array
-            cassettesArray.forEach((element, index) => {
-                if (element === undefined) {
-                    cassettesArray.splice(index, 1);
-                }
-            });
-            //! This is showing 1 cassette when there are none
+            const cassettesArray = (await Promise.all(cassettePromises)).flat();
             console.log(`Found ${cassettesArray.length} cassettes for ${editor.document.fileName}`);
+
+            // if cassettesArray.length is 0 or undefined, show message and return
+            if (cassettesArray.length === 0) {
+                vscode.window.showInformationMessage(`No cassettes found for this file`);
+                return;
+            }
+
             let deleteConfirmationResult = undefined;
             // if deleteConfirmation is 2 or higher, ask for confirmation
             if (deleteConfirmation >= 2) {
@@ -124,9 +127,9 @@ export async function activate(context: vscode.ExtensionContext) {
                 deleteConfirmationResult = 'Yes';
             }
             if (deleteConfirmationResult === 'Yes') {
-                const deletePromises = cassettesArray.map(async (cassetteFilePath) => {
-                    if (cassetteFilePath) {
-                        await vscode.workspace.fs.delete(vscode.Uri.file(cassetteFilePath));
+                const deletePromises = cassettesArray.map(async (cassetteUriFile) => {
+                    if (cassetteUriFile) {
+                        await vscode.workspace.fs.delete(cassetteUriFile);
                     }
                 });
                 await Promise.all(deletePromises);
