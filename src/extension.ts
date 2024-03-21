@@ -259,7 +259,7 @@ export class VcrCassMgrCodeLensProvider implements vscode.CodeLensProvider {
         }
 
         const vcrDecoratorsArray = searchForVcrDecorators(document);
-        let cassetteCount = 0;
+        let editorCassetteCount = 0;
 
         // Iterate through each vcr decorator, look for matching cassettes and create code lenses
         const codeLensesPromises = vcrDecoratorsArray.map(async (vcrDecorator) => {
@@ -268,6 +268,7 @@ export class VcrCassMgrCodeLensProvider implements vscode.CodeLensProvider {
             const matchingFiles = files.filter(file => file.startsWith(`${vcrDecorator.vcrTestName}`) && file.endsWith('.yaml'));
             let codeLensItems = [];
             const cassetteCount = matchingFiles.length;
+            editorCassetteCount += cassetteCount;
             const cassetteFilePaths = matchingFiles.map(file => vscode.Uri.file(path.join(cassetteDir, file)));
             if (cassetteCount > 0) {
                 const openTitle = cassetteCount === 1 ? 'Open cassette' : `Open ${cassetteCount} cassettes`;
@@ -295,16 +296,15 @@ export class VcrCassMgrCodeLensProvider implements vscode.CodeLensProvider {
                     codeLensItems.push(noCassetteCommand);
                 }
             }
-            this.updateCassetteCount(cassetteCount);
             return codeLensItems;
         });
         Promise.all(codeLensesPromises).then(() => {
-            console.log(`Found ${cassetteCount} cassettes`);
+            console.log(`Found ${editorCassetteCount} cassettes`);
+            this.updateCassetteCount(editorCassetteCount);
         });
     
         const codeLensesArrays = await Promise.all(codeLensesPromises);
         codeLensesArray = codeLensesArrays.flat();
-    
         // console.log(codeLensesArray);
         console.log(`Returning ${codeLensesArray.length} code lenses`);
         return codeLensesArray;
