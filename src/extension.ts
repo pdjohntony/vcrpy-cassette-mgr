@@ -1,5 +1,9 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as fs from 'fs';
+import * as util from 'util';
+
+const readdir = util.promisify(fs.readdir);
 
 let testFileNameStartsWith: string = 'test_';
 let cassetteDirectoryName: string = 'cassettes';
@@ -250,10 +254,12 @@ export class VcrCassMgrCodeLensProvider implements vscode.CodeLensProvider {
         let cassetteCount = 0;
 
         const codeLensesPromises = vcrDecoratorsArray.map(async (vcrDecorator) => {
-            const cassetteFilePath = path.join(cassetteDir, `${vcrDecorator.vcrTestName}.yaml`);
-            const exists = await checkFile(cassetteFilePath);
+            const cassetteDirPath = path.join(cassetteDir);
+            const files = await readdir(cassetteDirPath);
+            const matchingFiles = files.filter(file => file.startsWith(`${vcrDecorator.vcrTestName}`) && file.endsWith('.yaml'));
             let codeLensItems = [];
-            if (exists) {
+            for (const file of matchingFiles) {
+                const cassetteFilePath = path.join(cassetteDir, file);
                 cassetteCount++;
                 if (cassetteButtonOpen) {
                     const openCommand = new vscode.CodeLens(vcrDecorator.range, {
@@ -271,7 +277,9 @@ export class VcrCassMgrCodeLensProvider implements vscode.CodeLensProvider {
                     });
                     codeLensItems.push(deleteCommand);
                 }
-            } else {
+            }
+            // if matchingFiles is 0, add a no cassette found code lens
+            if (matchingFiles.length === 0) {
                 if (cassetteButtonOpen || cassetteButtonDelete) {
                     const noCassetteCommand = new vscode.CodeLens(vcrDecorator.range, {
                         title: 'No cassette found',
