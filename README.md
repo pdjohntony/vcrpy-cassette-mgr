@@ -1,5 +1,8 @@
 # VCR.py Cassette Manager Extension for Visual Studio Code
 
+[![GitHub](https://flat.badgen.net/static/github/vcrpy-cassette-mgr)](https://github.com/pdjohntony/vcrpy-cassette-mgr)
+[![Visual Studio Marketplace](https://flat.badgen.net/vs-marketplace/d/pdjohntony.vcrpy-cassette-mgr)](https://marketplace.visualstudio.com/items?itemName=pdjohntony.vcrpy-cassette-mgr)
+
 Easily open or delete vcrpy cassettes within your tests. Bulk delete cassettes from the current file or the entire workspace.
 
 ![features-overview](images/features-overview.gif)
@@ -16,6 +19,7 @@ Easily open or delete vcrpy cassettes within your tests. Bulk delete cassettes f
 * Python language mode must be selected for the active file.
 * Only scans for cassettes in files that start with `test_`. (can be changed with `testFileNameStartsWith` setting)
 * Cassette names must match their function name.
+* Only yaml cassettes are supported.
 
 ## Commands
 
@@ -34,16 +38,27 @@ Deletes all cassettes in the current workspace. Asks for confirmation before del
 * `vcrpy-cassette-mgr.cassetteButtonOpen`: Show a button in the editor to open the cassette file. Defaults to `true`.
 * `vcrpy-cassette-mgr.cassetteButtonDelete`: Show a button in the editor to delete the cassette file. Defaults to `true`.
 
+## Planned Features
+
+- Add the ability to detect vcr record mode (from pytest config or `python.testing.pytestArgs` vs code setting override) and change it from the status bar.
+- Add the ability to detect cassette folder (from pytest config).
+
 ## Known Issues
 
 None at this time.
 
 ## Release Notes
 
+### [1.1.1] - 2024-03-21
+
+Added planned features section to README.
+
+#### Bug Fixes
+- Fixed missing cassettes when `@pytest.mark.parametrize` decorator is used [#1](https://github.com/pdjohntony/vcrpy-cassette-mgr/issues/1)
+
 ### [1.1.0] - 2023-12-20
 
-New features
-
+#### New features
 - New configuration options:
   - `vcrpy-cassette-mgr.deleteConfirmation`
   - `vcrpy-cassette-mgr.cassetteButtonOpen`
@@ -55,8 +70,7 @@ New features
 
 ### [1.0.0] - 2023-12-15
 
-Initial release
-
+#### Initial release
 - CodeLens buttons above vcr decorators to open or delete cassettes
 - Commands:
   - Delete Cassettes in Current File
