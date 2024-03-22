@@ -107,7 +107,10 @@ export async function activate(context: vscode.ExtensionContext) {
                 // look for matching cassettes based on vcrDecorator.vcrTestName
                 const cassetteDirPath = path.join(cassetteDir);
                 const files = await readdir(cassetteDirPath);
-                const matchingFiles = files.filter(file => file.startsWith(`${vcrDecorator.vcrTestName}`) && file.endsWith('.yaml'));
+                const matchingFiles = files.filter(file => 
+                    (file.startsWith(`${vcrDecorator.vcrTestName}.`) || file.startsWith(`${vcrDecorator.vcrTestName}[`)) 
+                    && file.endsWith('.yaml')
+                );
                 return matchingFiles.map(file => vscode.Uri.file(path.join(cassetteDir, file)));
             });
             const cassettesArray = (await Promise.all(cassettePromises)).flat();
