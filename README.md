@@ -49,6 +49,11 @@ None at this time.
 
 ## Release Notes
 
+### [1.1.3] - 2024-03-21
+
+#### Bug Fixes
+- Fixed multiple cassettes found when tests have same base name [#2](https://github.com/pdjohntony/vcrpy-cassette-mgr/issues/2)
+
 ### [1.1.2] - 2024-03-21
 
 Added planned features section to README.
