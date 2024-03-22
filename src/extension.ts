@@ -265,7 +265,10 @@ export class VcrCassMgrCodeLensProvider implements vscode.CodeLensProvider {
         const codeLensesPromises = vcrDecoratorsArray.map(async (vcrDecorator) => {
             const cassetteDirPath = path.join(cassetteDir);
             const files = await readdir(cassetteDirPath);
-            const matchingFiles = files.filter(file => file.startsWith(`${vcrDecorator.vcrTestName}`) && file.endsWith('.yaml'));
+            const matchingFiles = files.filter(file => 
+                (file.startsWith(`${vcrDecorator.vcrTestName}.`) || file.startsWith(`${vcrDecorator.vcrTestName}[`)) 
+                && file.endsWith('.yaml')
+            );
             let codeLensItems = [];
             const cassetteCount = matchingFiles.length;
             editorCassetteCount += cassetteCount;
